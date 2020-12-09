@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -50,6 +51,37 @@ func installAction(t *testing.T) *Install {
 	instAction.ReleaseName = "test-install-release"
 
 	return instAction
+}
+
+func randStr(n int) string {
+	letters := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
+}
+
+func TestInstallReleaseMaxLen(t *testing.T) {
+	instAction := installAction(t)
+	mLen := 231
+	instAction.ReleaseName = randStr(mLen)
+
+	vals := map[string]interface{}{}
+	res, err := instAction.Run(buildChart(), vals)
+	assert.NoError(t, err)
+	assert.Equal(t, len(res.Name), mLen)
+
+}
+
+func TestInstallReleaseMaxLenExceeded(t *testing.T) {
+	instAction := installAction(t)
+	instAction.ReleaseName = randStr(232)
+
+	vals := map[string]interface{}{}
+	_, err := instAction.Run(buildChart(), vals)
+	assert.Error(t, err)
 }
 
 func TestInstallRelease(t *testing.T) {
