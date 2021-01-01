@@ -63,27 +63,6 @@ func randStr(n int) string {
 	return string(b)
 }
 
-func TestInstallReleaseMaxLen(t *testing.T) {
-	instAction := installAction(t)
-	mLen := 231
-	instAction.ReleaseName = randStr(mLen)
-
-	vals := map[string]interface{}{}
-	res, err := instAction.Run(buildChart(), vals)
-	assert.NoError(t, err)
-	assert.Equal(t, len(res.Name), mLen)
-
-}
-
-func TestInstallReleaseMaxLenExceeded(t *testing.T) {
-	instAction := installAction(t)
-	instAction.ReleaseName = randStr(232)
-
-	vals := map[string]interface{}{}
-	_, err := instAction.Run(buildChart(), vals)
-	assert.Error(t, err)
-}
-
 func TestInstallRelease(t *testing.T) {
 	is := assert.New(t)
 	instAction := installAction(t)
@@ -107,6 +86,33 @@ func TestInstallRelease(t *testing.T) {
 	is.NotEqual(len(rel.Manifest), 0)
 	is.Contains(rel.Manifest, "---\n# Source: hello/templates/hello\nhello: world")
 	is.Equal(rel.Info.Description, "Install complete")
+}
+
+func TestInstallReleaseMaxLen(t *testing.T) {
+	instAction := installAction(t)
+	instAction.ReleaseName = randStr(231)
+
+	if len(instAction.ReleaseName) != 231 {
+		t.Fatalf("Release test name is not the correct length")
+	}
+
+	vals := map[string]interface{}{}
+	res, err := instAction.Run(buildChart(), vals)
+	assert.NoError(t, err)
+	assert.Equal(t, len(res.Name), 231)
+}
+
+func TestInstallReleaseMaxLenExceeded(t *testing.T) {
+	instAction := installAction(t)
+	instAction.ReleaseName = randStr(232)
+
+	if len(instAction.ReleaseName) != 232 {
+		t.Fatalf("Release test name is not the correct length")
+	}
+
+	vals := map[string]interface{}{}
+	_, err := instAction.Run(buildChart(), vals)
+	assert.Error(t, err)
 }
 
 func TestInstallReleaseWithValues(t *testing.T) {
