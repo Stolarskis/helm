@@ -343,6 +343,36 @@ func TestReal(t *testing.T) {
 	}
 }
 
+func TestRealMaxResourceName(t *testing.T) {
+	// t.Skip("This is a live test, comment this line to run")
+	c := New(nil)
+	resources, err := c.Build(strings.NewReader(maxLenManifest), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := c.Create(resources); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, errs := c.Delete(resources); errs != nil {
+		t.Fatal(errs)
+	}
+}
+
+func TestRealOverMaxResourceName(t *testing.T) {
+	// t.Skip("This is a live test, comment this line to run")
+	c := New(nil)
+	resources, err := c.Build(strings.NewReader(overMaxLenManifest), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := c.Create(resources); err == nil {
+		t.Fatal(err)
+	}
+}
+
 const testServiceManifest = `
 kind: Service
 apiVersion: v1
@@ -387,7 +417,7 @@ spec:
     tier: backend
     role: master
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: redis-master
@@ -427,7 +457,7 @@ spec:
     tier: backend
     role: slave
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: redis-slave
@@ -467,7 +497,7 @@ spec:
     app: guestbook
     tier: frontend
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
@@ -494,7 +524,7 @@ spec:
 `
 
 const namespacedGuestbookManifest = `
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
@@ -519,4 +549,77 @@ spec:
           value: dns
         ports:
         - containerPort: 80
+`
+
+//name = 231 char
+const maxLenManifest = `
+apiVersion: apps/v1 
+kind: Deployment
+metadata:
+  name: xvlbzgbaicmrajwwhthctcuaxhxkqfdafplsjfbcxoeffrswxpldnjobcsnvlgtemapezqleqyhyzrywjjpjzpfrfegmotafethsbzrjxawnwekrbemfdzdcekxbakjqzlcttmttcoanatyyinkarekjyixjrscctnswynsgrussvmaozfzbsbojifqgzsnwtksmvoiglopbuopedkupdomervjarzlntxyeucw 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: master
+        image: k8s.gcr.io/redis:e2e  # or just image: redis
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: xvlbzgbaicmrajwwhthctcuaxhxkqfdafplsjfbcxoeffrswxpldnjobcsnvlgtemapezqleqyhyzrywjjpjzpfrfegmotafethsbzrjxawnwekrbemfdzdcekxbakjqzlcttmttcoanatyyinkarekjyixjrscctnswynsgrussvmaozfzbsbojifqgzsnwtksmvoiglopbuopedkupdomervjarzlntxyeucw 
+  labels:
+    app: redis 
+spec:
+  ports:
+  - port: 80 
+  selector:
+    app: redis 
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: xvlbzgbaicmrajwwhthctcuaxhxkqfdafplsjfbcxoeffrswxpldnjobcsnvlgtemapezqleqyhyzrywjjpjzpfrfegmotafethsbzrjxawnwekrbemfdzdcekxbakjqzlcttmttcoanatyyinkarekjyixjrscctnswynsgrussvmaozfzbsbojifqgzsnwtksmvoiglopbuopedkupdomervjarzlntxyeucw 
+data:
+  testKey:
+    testValue
+---
+apiVersion: v1
+kind: Secret 
+metadata:
+  name: xvlbzgbaicmrajwwhthctcuaxhxkqfdafplsjfbcxoeffrswxpldnjobcsnvlgtemapezqleqyhyzrywjjpjzpfrfegmotafethsbzrjxawnwekrbemfdzdcekxbakjqzlcttmttcoanatyyinkarekjyixjrscctnswynsgrussvmaozfzbsbojifqgzsnwtksmvoiglopbuopedkupdomervjarzlntxyeucw 
+data:
+  testKey:
+    dGVzdGluZ3Rlc3R0ZXN0c2V0c2V0c3RzdHN0ZQo=
+`
+
+//name = 261 char
+const overMaxLenManifest = `
+apiVersion: apps/v1 
+kind: Deployment
+metadata:
+  name: 123451234512345123451234512345xvlbzgbaicmrajwwhthctcuaxhxkqfdafplsjfbcxoeffrswxpldnjobcsnvlgtemapezqleqyhyzrywjjpjzpfrfegmotafethsbzrjxawnwekrbemfdzdcekxbakjqzlcttmttcoanatyyinkarekjyixjrscctnswynsgrussvmaozfzbsbojifqgzsnwtksmvoiglopbuopedkupdomervjarzlntxyeucw 
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: master
+        image: k8s.gcr.io/redis:e2e  # or just image: redis
+        ports:
+        - containerPort: 6379
 `
